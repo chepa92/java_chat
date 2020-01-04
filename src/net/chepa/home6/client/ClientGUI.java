@@ -17,10 +17,13 @@ public class ClientGUI implements StringConsumer, StringProducer {
   private JTextArea ta_chat;
   private JTextField tf_port, tf_ip, tf_name, tf_message;
   private JPanel chat_panel, send_panel, connection_panel, right_panel;
+  private StringConsumer sc, sp, me;
+  private ActionListener listener;
 
   public ClientGUI() {
+
     frame = new JFrame("CHAT CLIENT");
-    ta_chat = new JTextArea(200, 300);
+    ta_chat = new JTextArea(10,10);
     tf_port = new JTextField(10);
     tf_ip = new JTextField(10);
     tf_name = new JTextField(10);
@@ -45,6 +48,10 @@ public class ClientGUI implements StringConsumer, StringProducer {
     connection_panel.add(tf_name);
     connection_panel.add(bt_connect);
 
+    tf_ip.setText("127.0.0.1"); //TODO delete
+    tf_port.setText("1300"); //TODO delete
+    tf_name.setText("test"); //TODO delete
+
     right_panel.setLayout(new GridLayout(4, 1));
     right_panel.add(send_panel);
     right_panel.add(connection_panel);
@@ -53,6 +60,11 @@ public class ClientGUI implements StringConsumer, StringProducer {
     frame.add(chat_panel);
     frame.add(right_panel);
 
+    listener = new ButtonsListener();
+    bt_send.addActionListener(listener);
+    bt_connect.addActionListener(listener);
+
+    me = this;
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   }
 
@@ -75,11 +87,45 @@ public class ClientGUI implements StringConsumer, StringProducer {
 
     @Override
     public void actionPerformed(ActionEvent actionEvent) {
+      Object source = actionEvent.getSource();
+      if (source == bt_connect) //pressing connect button
+      {
+        txt_msg = tf_message.getText();
+        txt_ip = tf_ip.getText();
+        txt_port = tf_port.getText();
+        txt_name = tf_name.getText();
+        System.out.println("Trying to connect");
 
+        if (txt_ip.equals("") || (txt_port.equals(""))) {
+          System.out.println("NULL PORT/IP");
+        } else {
+          try {
+            connection = new ConnectionProxy(connect());
+            connection.start();
+            sc = connection;
+            System.out.println("Connected");
+            ta_chat.setText("Connected");
+            sc.consume(tf_name.getText() + " is now connected\n");
+            bt_send.setEnabled(true);
+            tf_ip.setEnabled(false);
+            tf_port.setEnabled(false);
+            tf_name.setEnabled(false);
+          } catch (Exception e1) {
+            System.out.println("Fail connection");
+          }
+          sp = connection;
+          sp.addConsumer(me);
+        }
+      }
+      if (bt_send == source)// pressing send button
+      {
+        System.out.println("Trying to send message: " + tf_message.getText());
+        txt_msg = tf_message + ": " + ta_chat.getText() + "\n";
+        sc.consume(txt_msg);
+        ta_chat.setText(null);
+      }
     }
-
   }
-
 
   @Override
   public void consume(String str) {
@@ -102,6 +148,5 @@ public class ClientGUI implements StringConsumer, StringProducer {
   public static void main(String args[]) {
     ClientGUI gui = new ClientGUI();
     gui.go();
-
   }
 }
