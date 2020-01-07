@@ -23,6 +23,7 @@ public class MessageBoard implements StringConsumer, StringProducer
     return board;
   }
 
+  /**Sending the message to all clients*/
   @Override
   public void consume(String str) {
     System.out.println(str);
@@ -38,7 +39,7 @@ public class MessageBoard implements StringConsumer, StringProducer
     list.add(sc);
   }
 
-  /** remove client to list */
+  /** remove client from list */
   @Override
   public void removeConsumer(StringConsumer sc) {
     list.remove(list.indexOf(sc));
